@@ -6,7 +6,6 @@ import { Posts } from './components/Posts';
 function App() {
   return (
     <Router>
-
       <div>
         <Routes>
           <Route path="/" element={ <Posts/> } />
