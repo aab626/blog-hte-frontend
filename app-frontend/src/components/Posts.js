@@ -122,6 +122,7 @@ export const Posts = () => {
     const getPosts = async () => {
         const response = await fetch(`${API}/posts`);
         const data = await response.json();
+        console.log(data);
         setPosts(data);
     };
 
@@ -151,6 +152,19 @@ export const Posts = () => {
         setPostBody(data.body);
         setPostEditId(id);
     };
+
+    // Function to render the edited post flag
+    const renderEditBox = (isEdited) => {
+        if (isEdited) {
+            return (
+                <div className='edit-flag'>
+                    Edited
+                </div>
+            );
+        } else {
+            return <br/>;
+        }
+    }
 
 
     // When the component runs, retrieve all the posts
@@ -200,6 +214,8 @@ export const Posts = () => {
                         <div className='date'>
                             {post.timestamp}
                         </div>
+
+                        {renderEditBox(post.edited)}
                     </div>
                 </div>
             ))}
