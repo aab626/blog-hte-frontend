@@ -3,11 +3,13 @@ import React, {useState, useEffect} from 'react';
 
 // API address from enviroment variables
 const API = process.env.REACT_APP_API;
+
+// Mode for the post submit button
 let MODE_CREATE = 'MODE_CREATE';
 let MODE_EDIT = 'MODE_EDIT';
 
 // Component
-export const Posts = () => {
+export const Posts = ({ loginStatus, setLoginStatus }) => {
 
     // State variables
     // Document related
@@ -161,8 +163,17 @@ export const Posts = () => {
                     Edited
                 </div>
             );
-        } else {
-            return <br/>;
+        }
+    }
+
+    const renderPostControls = (post) => {
+        if (loginStatus) {
+            return (
+                <div className='post-controls'>
+                    <button onClick={() => editPost(post._id)}>Edit</button>
+                    <button onClick={() => deletePost(post._id)}>Delete</button>
+                </div>
+            );
         }
     }
 
@@ -195,10 +206,8 @@ export const Posts = () => {
                     <div className='post-header'>
                         <h2>{post.title}</h2>
 
-                        <div className='post-controls'>
-                            <button onClick={() => editPost(post._id)}>Edit</button>
-                            <button onClick={() => deletePost(post._id)}>Delete</button>
-                        </div>
+                        {/* Render post controls only if the admin is logged in */}
+                        {renderPostControls(post)}
                         
                     </div>
 
