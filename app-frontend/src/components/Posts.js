@@ -9,13 +9,14 @@ let MODE_CREATE = 'MODE_CREATE';
 let MODE_EDIT = 'MODE_EDIT';
 
 // Component
-export const Posts = ({ loginStatus, setLoginStatus }) => {
+export const Posts = ({ loginStatus }) => {
 
     // State variables
     // Document related
     const [submitMode, setSubmitMode] = useState(MODE_CREATE);
     const [posts, setPosts] = useState([]);
 
+    const [submitButtonStatus, setSubmitButtonStatus] = useState(false);
     const [submitButtonText, setSubmitButtonText] = useState('Post');
 
     // Form fields
@@ -31,21 +32,20 @@ export const Posts = ({ loginStatus, setLoginStatus }) => {
     const handleFormSubmit = async (e) => {
         e.preventDefault();
 
-        let noEmptyFields = (postTitle != '') && (postAuthor != '') && (postBody != '');
+        // let noEmptyFields = (postTitle != '') && (postAuthor != '') && (postBody != '');
         let data;
         if (submitMode == MODE_CREATE) {
-            if (noEmptyFields) {
-                data = await handlePostCreation();
-            } else {
-                alert('All fields must contain input.');
-            }
+            data = await handlePostCreation();
+            // } else {
+            //     alert('All fields must contain input.');
+            // }
         
         } else if (submitMode == MODE_EDIT) {
-            if (noEmptyFields) {
-                data = await handlePostEditing();
-            } else {
-                alert('All fields must contain input.');
-            }
+            // if (noEmptyFields) {
+            data = await handlePostEditing();
+            // } else {
+            //     alert('All fields must contain input.');
+            // }
         }
 
 
@@ -159,22 +159,58 @@ export const Posts = ({ loginStatus, setLoginStatus }) => {
     const renderEditBox = (isEdited) => {
         if (isEdited) {
             return (
-                <div className='edit-flag'>
+                <span className="badge bg-secondary">
                     Edited
-                </div>
-            );
+                </span>
+            )
         }
     }
 
     const renderPostControls = (post) => {
         if (loginStatus) {
             return (
-                <div className='post-controls'>
-                    <button onClick={() => editPost(post._id)}>Edit</button>
-                    <button onClick={() => deletePost(post._id)}>Delete</button>
+                <div className="btn-group post-controls" role="group">
+                    <button 
+                        type="button" 
+                        className="btn btn-primary"
+                        onClick={() => editPost(post._id)}
+                    >
+                        Edit
+                    </button>
+
+                    <button 
+                        type="button" 
+                        className="btn btn-primary"
+                        onClick={() => deletePost(post._id)}
+                    >
+                        Delete
+                    </button>
                 </div>
             );
         }
+    }
+
+    // Renders a timestamp within a post
+    const renderTimestamp = (postTimestamp) => {
+        var date_split = postTimestamp.split('T')[0].split('-');
+        var date_hour = postTimestamp.split('T')[1].split(':')[0];
+        var date_minute = postTimestamp.split('T')[1].split(':')[1];
+        var str = `${date_split[2]}/${date_split[1]}/${date_split[0]}, ${date_hour}:${date_minute}`;
+        
+        return (
+            <small className="text-body-secondary">{str}</small>
+        );
+    }
+
+    
+    // Function to enable/disable the submit button when creating/editing posts
+    const handleSubmitButtonStatus = () => {
+        let conditionTitle = 1 <= postTitle.length && postTitle.length <= 50;
+        let conditionAuthor = 1 <= postAuthor.length && postAuthor.length <= 20;
+        let conditionBody = 1 <= postBody.length && postBody.length <= 250;
+        
+        let allowSubmitButton = conditionTitle && conditionAuthor && conditionBody;
+        setSubmitButtonStatus(allowSubmitButton);
     }
 
 
@@ -183,51 +219,117 @@ export const Posts = ({ loginStatus, setLoginStatus }) => {
         getPosts();
     }, []);
 
+    // Handle submit button status (disabled/enabled) based on conditions about field values.
+    useEffect(() => { handleSubmitButtonStatus() }, [postTitle]);
+    useEffect(() => { handleSubmitButtonStatus() }, [postAuthor]);
+    useEffect(() => { handleSubmitButtonStatus() }, [postBody]);
+
+
     // HTML code
     return (
         <div className='container'>
-            {/* Post control menu */}
-            <div className='post-menu'>
-                <form onSubmit={handleFormSubmit}>
-                    <div className='post-menu-group'>
-                        Title <input type='text' onChange={e => setPostTitle(e.target.value)} value={postTitle} />
-                        Message <input type='text' onChange={e => setPostBody(e.target.value)} value={postBody} />
-                        Author <input type='text' onChange={e => setPostAuthor(e.target.value)} value={postAuthor} />
+            
+            {/* Post menu container */}
+            <div className='container post-menu'>
+                <form>
+                    <div className="row g-3">
+                        <div className="mb-3 form-floating col-md-9">
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="floatingInputValue-post-title"
+                                onChange={e => setPostTitle(e.target.value)}
+                                value={postTitle}
+                            />
+                            
+                            <label htmlFor="floatingInputValue-post-title">
+                                Title
+                            </label>
+                        </div>
+                        
+                        <div className="mb-3 form-floating col-md-3">
+                            <input
+                                type="text"
+                                className="form-control"
+                                id="floatingInputValue-post-author"
+                                onChange={e => setPostAuthor(e.target.value)}
+                                value={postAuthor}
+                            />
+
+                            <label htmlFor="floatingInputValue-post-author">
+                                Author
+                            </label>
+                        </div>
+
                     </div>
 
-                    <button>{submitButtonText}</button>
+
+                    <div className="mb-3 form-floating">
+                        <textarea
+                            type="text"
+                            className="form-control"
+                            id="floatingTextarea2-post-message"
+                            style={{ height: 150 }}
+                            onChange={e => setPostBody(e.target.value)}
+                            value={postBody}
+                        />
+                        <label htmlFor="floatingTextarea2-post-message">Message</label>
+                    </div>
+
+                    <div className="row g-3">
+                        <div className='col-md-9'></div>
+                        
+                        <div className='col-md-3 d-grid col-6 mx-auto"'>
+                            <button 
+                                type="button" 
+                                className="btn btn-block btn-primary"
+                                onClick={e => handleFormSubmit(e)}
+                                disabled={!submitButtonStatus}
+                            >
+
+                                {submitButtonText}
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
+
+            {/* Separator between post menu and posts */}
+            <hr className="hr hr-blurry" />
             
             {/* Post container */}
-            <div className="post-container">
-            {posts.map((post) => (
-                <div className='post' key={post._id}>
-                    <div className='post-header'>
-                        <h2>{post.title}</h2>
+            <div className="container post-container">
+                {posts.map((post) => (
 
-                        {/* Render post controls only if the admin is logged in */}
-                        {renderPostControls(post)}
-                        
-                    </div>
-
-                    <div className='post-body'>
-                        <p>{post.body}</p>
-                    </div>
-
-                    <div className='post-footer'>
-                        <div className='author'>
-                            {post.author}
+                    <div className="card border-secondary mb-3 post" key={post._id} >
+                        <div className="card-header post-header">
+                            <h2>{post.title}</h2>
+                            <small className="text-body-secondary">{post.author}</small>
                         </div>
 
-                        <div className='date'>
-                            {post.timestamp}
+                        <div className="card-body text-dark post-body">
+                            <p className="card-text">
+                            {post.body}
+                            </p>
                         </div>
 
-                        {renderEditBox(post.edited)}
+                        <div className="card-footer bg-transparent row align-items-center">
+                            {/* Post Controls */}
+                            <div className='col align-self-start'>
+                                {renderPostControls(post)}
+                            </div>
+
+                            {/* Edit Flag and Timestamp */}
+                            <div className='col-md-1 text-center'>
+                                {renderEditBox(post.edited)}
+                            </div>
+
+                            <div className='col-auto align-self-end text-center'>
+                                {renderTimestamp(post.timestamp)}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            ))}
+                ))}
             </div>
 
         </div>
