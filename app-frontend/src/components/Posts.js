@@ -8,6 +8,11 @@ const API = process.env.REACT_APP_API;
 let MODE_CREATE = 'MODE_CREATE';
 let MODE_EDIT = 'MODE_EDIT';
 
+// Limits for maximum post element length
+let MAX_POST_TITLE_LENGTH = 50;
+let MAX_POST_AUTHOR_LENGTH = 20;
+let MAX_POST_BODY_LENGTH = 250;
+
 // Component
 export const Posts = ({ loginStatus }) => {
 
@@ -32,22 +37,12 @@ export const Posts = ({ loginStatus }) => {
     const handleFormSubmit = async (e) => {
         e.preventDefault();
 
-        // let noEmptyFields = (postTitle != '') && (postAuthor != '') && (postBody != '');
         let data;
         if (submitMode == MODE_CREATE) {
             data = await handlePostCreation();
-            // } else {
-            //     alert('All fields must contain input.');
-            // }
-        
         } else if (submitMode == MODE_EDIT) {
-            // if (noEmptyFields) {
             data = await handlePostEditing();
-            // } else {
-            //     alert('All fields must contain input.');
-            // }
         }
-
 
         if (typeof data !== 'undefined') {
             console.log(data);
@@ -67,7 +62,7 @@ export const Posts = ({ loginStatus }) => {
                     title: postTitle,
                     author: postAuthor,
                     body: postBody,
-                    timestamp: (new Date()).toISOString()
+                    timestamp: (new Date()).toString()
                 }
             )
         });
@@ -124,7 +119,6 @@ export const Posts = ({ loginStatus }) => {
     const getPosts = async () => {
         const response = await fetch(`${API}/posts`);
         const data = await response.json();
-        console.log(data);
         setPosts(data);
     };
 
@@ -137,7 +131,6 @@ export const Posts = ({ loginStatus }) => {
             const response = await fetch(`${API}/posts/${id}`, {method: 'DELETE', headers: {'Content-Type': 'application/json'}});
             const data = await response.json();
             console.log(data);
-            
             await getPosts();
         }
     };
@@ -192,20 +185,25 @@ export const Posts = ({ loginStatus }) => {
 
     // Renders a timestamp within a post
     const renderTimestamp = (postTimestamp) => {
-        var date_split = postTimestamp.split('T')[0].split('-');
-        var date_hour = postTimestamp.split('T')[1].split(':')[0];
-        var date_minute = postTimestamp.split('T')[1].split(':')[1];
-        var str = `${date_split[2]}/${date_split[1]}/${date_split[0]}, ${date_hour}:${date_minute}`;
+        var date = new Date(postTimestamp);
+
+        var date_day = date.getDate().toString().padStart(2, '0');
+        var date_month = (date.getMonth() + 1).toString().padStart(2, '0');
+        var date_year = date.getFullYear()
+        var date_hour = date.getHours().toString().padStart(2, '0');
+        var date_minute = date.getMinutes().toString().padStart(2, '0');
         
         return (
-            <small className="text-body-secondary">{str}</small>
+            <small className="text-body-secondary">
+                {`${date_day}/${date_month}/${date_year}, ${date_hour}:${date_minute}`}
+            </small>
         );
     }
 
     
     // Function to enable/disable the submit button when creating/editing posts
     const handleSubmitButtonStatus = () => {
-        let conditionTitle = 1 <= postTitle.length && postTitle.length <= 50;
+        let conditionTitle = 1 <= postTitle.length && postTitle.length <= 500;
         let conditionAuthor = 1 <= postAuthor.length && postAuthor.length <= 20;
         let conditionBody = 1 <= postBody.length && postBody.length <= 250;
         
@@ -224,6 +222,27 @@ export const Posts = ({ loginStatus }) => {
     useEffect(() => { handleSubmitButtonStatus() }, [postAuthor]);
     useEffect(() => { handleSubmitButtonStatus() }, [postBody]);
 
+    // Handler for changes in post title input field
+    const handlePostTitleChange = (newPostTitle) => {
+        if (newPostTitle.length < MAX_POST_TITLE_LENGTH) {
+            setPostTitle(newPostTitle);
+        }
+    }
+
+    // Handler for changes in post author input field
+    const handlePostAuthorChange = (newPostAuthor) => {
+        if (newPostAuthor.length < MAX_POST_AUTHOR_LENGTH) {
+            setPostAuthor(newPostAuthor);
+        }
+    }
+
+    // Handler for changes in post body input field
+    const handlePostBodyChange = (newPostBody) => {
+        if (newPostBody.length < MAX_POST_BODY_LENGTH) {
+            setPostBody(newPostBody);
+        }
+    }
+
 
     // HTML code
     return (
@@ -238,7 +257,7 @@ export const Posts = ({ loginStatus }) => {
                                 type="text"
                                 className="form-control"
                                 id="floatingInputValue-post-title"
-                                onChange={e => setPostTitle(e.target.value)}
+                                onChange={e => handlePostTitleChange(e.target.value)}
                                 value={postTitle}
                             />
                             
@@ -252,7 +271,7 @@ export const Posts = ({ loginStatus }) => {
                                 type="text"
                                 className="form-control"
                                 id="floatingInputValue-post-author"
-                                onChange={e => setPostAuthor(e.target.value)}
+                                onChange={e => handlePostAuthorChange(e.target.value)}
                                 value={postAuthor}
                             />
 
@@ -266,11 +285,11 @@ export const Posts = ({ loginStatus }) => {
 
                     <div className="mb-3 form-floating">
                         <textarea
-                            type="text"
+                            type="textarea"
                             className="form-control"
                             id="floatingTextarea2-post-message"
                             style={{ height: 150 }}
-                            onChange={e => setPostBody(e.target.value)}
+                            onChange={e => handlePostBodyChange(e.target.value)}
                             value={postBody}
                         />
                         <label htmlFor="floatingTextarea2-post-message">Message</label>
